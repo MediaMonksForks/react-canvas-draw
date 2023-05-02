@@ -2,16 +2,24 @@
  * @type {ViewPoint}
  */
 const NULL_VIEW_POINT = Object.freeze({
-  x: 0, y: 0, untransformedX: 0, untransformedY: 0
+  x: 0,
+  y: 0,
+  untransformedX: 0,
+  untransformedY: 0,
 });
 
 /**
  * @type {CanvasBounds}
  */
 const NULL_BOUNDS = Object.freeze({
-  canvasWidth: 0, canvasHeight: 0,
-  left: 0, top: 0, right: 0, bottom: 0,
-  viewMin: NULL_VIEW_POINT, viewMax: NULL_VIEW_POINT,
+  canvasWidth: 0,
+  canvasHeight: 0,
+  left: 0,
+  top: 0,
+  right: 0,
+  bottom: 0,
+  viewMin: NULL_VIEW_POINT,
+  viewMax: NULL_VIEW_POINT,
 });
 
 /**
@@ -22,7 +30,7 @@ const NULL_BOUNDS = Object.freeze({
 export const IDENTITY = Object.freeze({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
 
 function valueOrDefault(value, defaultValue) {
-  if (value === null || (typeof value) === "undefined") {
+  if (value === null || typeof value === "undefined") {
     return defaultValue;
   } else {
     return value;
@@ -97,11 +105,11 @@ export default class CoordinateSystem {
    * @typedef {(update: { view: View, transform: Matrix }) => void} ViewListener
    */
 
-   /**
-    * @type {ViewListener[]}
-    * @private
-    */
-   _viewChangeListeners = new Set();
+  /**
+   * @type {ViewListener[]}
+   * @private
+   */
+  _viewChangeListeners = new Set();
 
   /**
    * @returns {Canvas} the canvas currently associated with this instance.
@@ -259,8 +267,14 @@ export default class CoordinateSystem {
       const { left, top, right, bottom } = this._canvas.getBoundingClientRect();
       return {
         viewMin: this.clientPointToViewPoint({ clientX: left, clientY: top }),
-        viewMax: this.clientPointToViewPoint({ clientX: right, clientY: bottom }),
-        left, top, right, bottom,
+        viewMax: this.clientPointToViewPoint({
+          clientX: right,
+          clientY: bottom,
+        }),
+        left,
+        top,
+        right,
+        bottom,
         canvasWidth: this._canvas.width,
         canvasHeight: this._canvas.height,
       };
@@ -288,6 +302,10 @@ export default class CoordinateSystem {
    * @returns {View} a new view object representing the constrained input.
    */
   clampView = ({ scale, x, y }) => {
+    if (scale === 1.0 && x === 0 && y === 0) {
+      return { scale: 1.0, x: 0, y: 0 };
+    }
+
     const { min, max } = this.scaleExtents;
     const { width, height } = this.documentSize;
     const { left, top, right, bottom } = this.canvasRect || NULL_BOUNDS;
@@ -325,12 +343,15 @@ export default class CoordinateSystem {
    */
   setView = (view) => {
     const newView = this.clampView({ ...this._view, ...(view || {}) });
+
     const { scale, x, y } = this._view;
 
     // Only trigger if the view actually changed.
     if (newView.scale !== scale || newView.x !== x || newView.y !== y) {
       this._view = newView;
-      this._viewChangeListeners.forEach(listener => listener && listener(newView));
+      this._viewChangeListeners.forEach(
+        (listener) => listener && listener(newView)
+      );
     }
 
     return { ...this._view };
@@ -347,14 +368,23 @@ export default class CoordinateSystem {
    */
   scaleAtClientPoint = (deltaScale, clientPoint) => {
     const viewPt = this.clientPointToViewPoint(clientPoint);
-    const newView = this.clampView({ ...this._view, scale: this._view.scale + deltaScale });
+    const newView = this.clampView({
+      ...this._view,
+      scale: this._view.scale + deltaScale,
+    });
     const clientPtPostScale = this.viewPointToClientPoint(viewPt, newView);
 
-    newView.x = this._view.x - (clientPtPostScale.clientX - clientPoint.clientX);
-    newView.y = this._view.y - (clientPtPostScale.clientY - clientPoint.clientY);
+    newView.x =
+      this._view.x - (clientPtPostScale.clientX - clientPoint.clientX);
+    newView.y =
+      this._view.y - (clientPtPostScale.clientY - clientPoint.clientY);
 
     return this.setView(newView);
   };
+
+  pan = (e) => {
+    this.setView({x: this.x - e.deltaX, y: this.y - e.deltaY});
+  }
 
   /**
    * Describes a point in view space (client space after the viewport transform
@@ -410,15 +440,15 @@ export default class CoordinateSystem {
    *    canvas
    */
 
-   /**
-    * @param {ViewPoint} point the point to transform in view space
-    * @param {number} point.x the point's x-coordinate
-    * @param {number} point.y the point's y-coordinate
-    * @param {View} view the view transform to apply (defaults to the current view)
-    * @returns {ClientPoint} the result of converting the given coordinate to
-    * client space. If there is no canvas set, a top-left corner of (0, 0) is
-    * assumed.
-    */
+  /**
+   * @param {ViewPoint} point the point to transform in view space
+   * @param {number} point.x the point's x-coordinate
+   * @param {number} point.y the point's y-coordinate
+   * @param {View} view the view transform to apply (defaults to the current view)
+   * @returns {ClientPoint} the result of converting the given coordinate to
+   * client space. If there is no canvas set, a top-left corner of (0, 0) is
+   * assumed.
+   */
   viewPointToClientPoint = ({ x, y }, view = this._view) => {
     const { left, top } = this.canvasRect || NULL_BOUNDS;
     const relativeX = x * view.scale + view.x;
