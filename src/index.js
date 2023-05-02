@@ -10,6 +10,8 @@ import drawImage from "./drawImage";
 import { DefaultState } from "./interactionStateMachine";
 import makePassiveEventOption from "./makePassiveEventOption";
 
+// this is a test
+
 function midPointBtw(p1, p2) {
   return {
     x: p1.x + (p2.x - p1.x) / 2,
