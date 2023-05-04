@@ -250,64 +250,76 @@ export default class CanvasDraw extends PureComponent {
     context.putImageData(imageData, 0, 0);
   };
 
-  /**
-   * Combination of work by Ernie Arrowsmith and emizz
-   * References:
-   * https://stackoverflow.com/questions/32160098/change-html-canvas-black-background-to-white-background-when-creating-jpg-image
-   * https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL
+  createExportCanvasContext = (canvas) => {
+    const { width, height } = this.getExportCanvasSize();
 
-   * This function will export the canvas to a data URL, which can subsequently be used to share or manipulate the image file.
-   * @param {string} fileType Specifies the file format to export to. Note: should only be the file type, not the "image/" prefix.
-   * @param {string} output Specifies whether the function creates an image out of the background image or the drawing. 
-   * It puts the drawing on top of the image when output is undefined
+    canvas.width = width;
+    canvas.height = height;
 
-   */
+    return canvas.getContext("2d");
+  };
 
-  getDataUrl = (fileType, output) => {
-    if (!fileType) fileType = "png";
+  drawInpainting = (imageExportContext, maskExportContext) => {
+    const exportDrawingSize = this.getDrawingExportSize();
 
+    this.drawExportItem(
+      imageExportContext,
+      exportDrawingSize,
+      this.canvas.grid
+    );
+    this.drawExportItem(
+      maskExportContext,
+      exportDrawingSize,
+      this.canvas.drawing
+    );
+    this.convertToMask(maskExportContext, exportDrawingSize);
+  };
+
+  drawOutpainting = (imageExportContext, maskExportContext) => {
+    const exportDrawingSize = this.getDrawingExportSize();
+
+    this.drawExportItem(
+      imageExportContext,
+      exportDrawingSize,
+      this.canvas.drawing
+    );
+    this.drawExportItem(
+      imageExportContext,
+      exportDrawingSize,
+      this.canvas.grid
+    );
+
+    this.drawExportItem(maskExportContext, exportDrawingSize, this.canvas.grid);
+    this.convertToMask(maskExportContext, exportDrawingSize, {
+      transparent: 255,
+      default: 0,
+    });
+  };
+
+  getImages = (output) => {
     const oldView = this.coordSystem.view;
     this.resetView();
 
-    const exportCanvasSize = this.getExportCanvasSize();
-    const exportDrawingSize = this.getDrawingExportSize();
+    const imageExportCanvas = document.createElement("canvas");
+    const maskExportCanvas = document.createElement("canvas");
+    const imageExportContext =
+      this.createExportCanvasContext(imageExportCanvas);
+    const maskExportContext = this.createExportCanvasContext(maskExportCanvas);
 
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = exportCanvasSize.width;
-    exportCanvas.height = exportCanvasSize.height;
-    const exportContext = exportCanvas.getContext("2d");
-
-    if (!output || output === "image" || output === "imageWithDrawing") {
-      this.drawExportItem(exportContext, exportDrawingSize, this.canvas.grid);
+    if (output === "inpaint") {
+      this.drawInpainting(imageExportContext, maskExportContext);
     }
 
-    if (!output || output === "mask" || output === "imageWithDrawing") {
-      this.drawExportItem(
-        exportContext,
-        exportDrawingSize,
-        this.canvas.drawing
-      );
-
-      if (output === "mask") {
-        this.convertToMask(exportContext, exportDrawingSize);
-      }
-    }
-
-    if (!output || output === "outpaint-mask") {
-      // Draw image with the artboard
-      this.drawExportItem(exportContext, exportDrawingSize, this.canvas.grid);
-
-      if (output === "outpaint-mask") {
-        this.convertToMask(exportContext, exportDrawingSize, {
-          transparent: 255,
-          default: 0,
-        });
-      }
+    if (output === "outpaint") {
+      this.drawOutpainting(imageExportContext, maskExportContext);
     }
 
     this.setView(oldView);
 
-    return exportCanvas.toDataURL(`image/${fileType}`);
+    return {
+      image: imageExportCanvas.toDataURL(`image/png`),
+      mask: maskExportCanvas.toDataURL(`image/png`),
+    };
   };
 
   loadSaveData = (saveData, immediate = this.props.immediateLoading) => {
