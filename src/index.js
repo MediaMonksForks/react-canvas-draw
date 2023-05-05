@@ -23,6 +23,11 @@ const boundsProp = PropTypes.shape({
   max: PropTypes.number.isRequired,
 });
 
+const outputVariants = {
+  inpaint: "inpaint",
+  outpaint: "outpaint",
+};
+
 export default class CanvasDraw extends PureComponent {
   static propTypes = {
     onChange: PropTypes.func,
@@ -306,11 +311,11 @@ export default class CanvasDraw extends PureComponent {
       this.createExportCanvasContext(imageExportCanvas);
     const maskExportContext = this.createExportCanvasContext(maskExportCanvas);
 
-    if (output === "inpaint") {
+    if (output === outputVariants.inpaint) {
       this.drawInpainting(imageExportContext, maskExportContext);
     }
 
-    if (output === "outpaint") {
+    if (output === outputVariants.outpaint) {
       this.drawOutpainting(imageExportContext, maskExportContext);
     }
 
