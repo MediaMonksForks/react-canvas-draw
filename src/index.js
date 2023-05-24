@@ -202,15 +202,13 @@ export default class CanvasDraw extends PureComponent {
   };
 
   getDrawingExportSize = () => {
-    const { canvasDimensions, imageDimensions } = this.props;
-    const { width, height } = canvasDimensions;
+    const { canvasDimensions, artboardDimensions,  imageDimensions } = this.props;
+    const { width, height } = artboardDimensions;
+
     return {
-      width: Math.round(
-        (imageDimensions.originalWidth / imageDimensions.width) * width
-      ),
-      height: Math.round(
-        (imageDimensions.originalHeight / imageDimensions.height) * height
-      ),
+      width: artboardDimensions.width,
+      height: artboardDimensions.height,
+      imageDimensions
     };
   };
 
@@ -221,10 +219,10 @@ export default class CanvasDraw extends PureComponent {
 
     context.drawImage(
       canvas,
-      -this.left * multiplier,
+      Math.min(-this.left * multiplier, 0),
       0,
-      size.width,
-      size.height
+      size.imageDimensions.width,
+      size.imageDimensions.height,
     );
   };
 
@@ -272,6 +270,7 @@ export default class CanvasDraw extends PureComponent {
       exportDrawingSize,
       this.canvas.grid
     );
+
     this.drawExportItem(
       maskExportContext,
       exportDrawingSize,
@@ -286,12 +285,13 @@ export default class CanvasDraw extends PureComponent {
     this.drawExportItem(
       imageExportContext,
       exportDrawingSize,
-      this.canvas.drawing
-    );
-    this.drawExportItem(
-      imageExportContext,
-      exportDrawingSize,
       this.canvas.grid
+    );
+
+    this.drawExportItem(
+        imageExportContext,
+        exportDrawingSize,
+        this.canvas.drawing
     );
 
     this.drawExportItem(maskExportContext, exportDrawingSize, this.canvas.grid);
