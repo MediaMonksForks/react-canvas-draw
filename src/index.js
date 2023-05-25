@@ -221,8 +221,8 @@ export default class CanvasDraw extends PureComponent {
       canvas,
       Math.min(-this.left * multiplier, 0),
       0,
-      size.imageDimensions.width,
-      size.imageDimensions.height,
+      size.width,
+      size.height,
     );
   };
 
@@ -267,7 +267,7 @@ export default class CanvasDraw extends PureComponent {
 
     this.drawExportItem(
       imageExportContext,
-      exportDrawingSize,
+        exportDrawingSize.imageDimensions,
       this.canvas.grid
     );
 
@@ -284,7 +284,7 @@ export default class CanvasDraw extends PureComponent {
 
     this.drawExportItem(
       imageExportContext,
-      exportDrawingSize,
+      exportDrawingSize.imageDimensions,
       this.canvas.grid
     );
 
@@ -294,7 +294,7 @@ export default class CanvasDraw extends PureComponent {
         this.canvas.drawing
     );
 
-    this.drawExportItem(maskExportContext, exportDrawingSize, this.canvas.grid);
+    this.drawExportItem(maskExportContext, exportDrawingSize.imageDimensions, this.canvas.grid);
     this.convertToMask(maskExportContext, exportDrawingSize, {
       transparent: 255,
       default: 0,
@@ -303,7 +303,39 @@ export default class CanvasDraw extends PureComponent {
 
   getImages = (output) => {
     const oldView = this.coordSystem.view;
-    this.resetView();
+
+    // this.resetView();
+    //
+    // const { width, height } = this.getDrawingExportSize();
+    // const scale = 0.33; // 0.22; // this.props.canvasDimensions.width / this.props.artboardDimensions.width;
+    // const x = (this.props.canvasDimensions.width / 2 * scale) + ((this.props.artboardDimensions.width - this.props.imageDimensions.width) * scale);
+    //
+    // console.log({
+    //   coordSystem: JSON.parse(JSON.stringify(this.coordSystem.view)),
+    //   scale
+    // });
+    //
+    // // this.coordSystem.documentSize = { width, height };
+    //
+    // console.log({
+    //   coordSystem: JSON.parse(JSON.stringify(this.coordSystem.view))
+    // });
+    //
+    // // console.log('after', this.coordSystem);
+    //
+    // this.canvasContainer.style.width = `${width}px`;
+    // this.canvasContainer.style.height = `${height}px`;
+    //
+    // this.setCanvasSize(this.canvas.grid, width, height);
+    //
+    // drawImage({
+    //   ctx: this.ctx.grid,
+    //   img: this.image,
+    //   w: this.props.imageDimensions.width,
+    //   h: this.props.imageDimensions.height,
+    //   x: 0,
+    //   y: 0,
+    // });
 
     const imageExportCanvas = document.createElement("canvas");
     const maskExportCanvas = document.createElement("canvas");
